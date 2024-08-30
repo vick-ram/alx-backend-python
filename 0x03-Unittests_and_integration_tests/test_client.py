@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """test_client module"""
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, PropertyMock
 from parameterized import parameterized
 from client import GithubOrgClient
 from utils import get_json
@@ -39,8 +39,13 @@ class TestGithubOrgClient(unittest.TestCase):
         }
 
         with patch.object(
-                GithubOrgClient,
-                'org', return_value=mock_org_payload):
+            GithubOrgClient,
+            'org',
+            new_callable=PropertyMock
+        ) as mock_org:
+            """Mock the org property to return the mock_org_payload"""
+            mock_org.return_value = mock_org_payload
+
             """Instantiate the client with any org name"""
             client = GithubOrgClient("google")
 
@@ -63,15 +68,15 @@ class TestGithubOrgClient(unittest.TestCase):
 
         """Set the return value of the mock get_json function"""
         mock_get_json.return_value = mock_repo_payload
+        mock_url = "https://api.github.com/orgs/google/repos"
 
         """Mock the _public_repos_url property"""
-        mock_url = "https://api.github.com/orgs/google/repos"
+        mock_public_repos_url = PropertyMock(return_value=mock_url)
         with patch.object(
             GithubOrgClient,
             '_public_repos_url',
-            new_callable=patch.PropertyMock
-        ) as mock_public_repos_url:
-            mock_public_repos_url.return_value = mock_url
+            mock_public_repos_url
+        ) as _:
 
             """Instantiate the GithubOrgClient"""
             client = GithubOrgClient("google")
